@@ -1,0 +1,9 @@
+{
+    "market": 20,
+    "sector": 15,
+    "ema": 15,
+    "volume": 10,
+    "relative_strength": 15,
+    "candlestick": 10,
+    "timeframe": 15
+}
