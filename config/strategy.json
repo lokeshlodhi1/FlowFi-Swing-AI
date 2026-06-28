@@ -1,0 +1,42 @@
+{
+  "capital": 100000,
+
+  "risk_percent": 1,
+
+  "confidence_required": 90,
+
+  "ema": {
+
+    "fast": 20,
+
+    "medium": 50,
+
+    "slow": 200
+
+  },
+
+  "volume_multiplier": 1.5,
+
+  "atr_multiplier": 1.5,
+
+  "target1_rr": 2,
+
+  "target2_rr": 3,
+
+  "scanner": {
+
+    "minimum_price": 100,
+
+    "minimum_volume": 500000,
+
+    "maximum_positions": 5
+
+  },
+
+  "telegram": {
+
+    "enabled": true
+
+  }
+
+}
