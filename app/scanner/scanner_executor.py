@@ -109,3 +109,4 @@ class ScannerExecutor:
         trade.signal = result["signal"]
 
         return trade
+result = self.signal_generator.generate(...)
