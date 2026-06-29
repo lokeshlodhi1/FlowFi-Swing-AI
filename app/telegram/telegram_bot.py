@@ -1,4 +1,3 @@
-import hashlib
 import requests
 
 
@@ -10,21 +9,24 @@ class TelegramBot:
 
     def send_message(self, message: str):
 
-        print("\n========== TELEGRAM CONFIG ==========")
-        print("Token Exists :", bool(self.token))
-        print("Chat Length  :", len(str(self.chat_id)))
-        print("Chat Hash    :", hashlib.sha256(str(self.chat_id).encode()).hexdigest()[:12])
-        print("=====================================\n")
-
-        url = f"https://api.telegram.org/bot{self.token}/sendMessage"
-
-        payload = {
-            "chat_id": self.chat_id,
-            "text": message,
-            "parse_mode": "Markdown"
-        }
-
         try:
+            # Identify the bot
+            me = requests.get(
+                f"https://api.telegram.org/bot{self.token}/getMe",
+                timeout=20
+            ).json()
+
+            print("\n========== BOT INFO ==========")
+            print(me)
+            print("==============================")
+
+            url = f"https://api.telegram.org/bot{self.token}/sendMessage"
+
+            payload = {
+                "chat_id": self.chat_id,
+                "text": message,
+                "parse_mode": "Markdown"
+            }
 
             response = requests.post(
                 url,
@@ -41,6 +43,5 @@ class TelegramBot:
             return data.get("ok", False)
 
         except Exception as e:
-
             print("Telegram Error:", e)
             return False
