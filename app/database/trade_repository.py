@@ -15,14 +15,14 @@ class TradeRepository:
             (
                 symbol,
                 signal,
+                confidence,
                 entry,
                 stop_loss,
                 target1,
                 target2,
                 quantity,
-                confidence,
                 risk_reward,
-                status
+                reasons
             )
             VALUES
             (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -30,31 +30,19 @@ class TradeRepository:
             (
                 trade.symbol,
                 trade.signal,
+                trade.confidence,
                 trade.entry,
                 trade.stop_loss,
                 trade.target1,
                 trade.target2,
                 trade.quantity,
-                trade.confidence,
                 trade.risk_reward,
-                "OPEN"
+                ", ".join(trade.reasons)
             )
         )
 
-    def get_open_trades(self):
+    def all(self):
 
         return self.db.fetchall(
-
-            "SELECT * FROM trades WHERE status='OPEN'"
-
-        )
-
-    def close_trade(self, trade_id):
-
-        self.db.execute(
-
-            "UPDATE trades SET status='CLOSED' WHERE id=?",
-
-            (trade_id,)
-
+            "SELECT * FROM trades ORDER BY id DESC"
         )
