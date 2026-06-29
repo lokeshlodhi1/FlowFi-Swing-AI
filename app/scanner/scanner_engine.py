@@ -1,48 +1,24 @@
-from typing import Dict, Any
-
-from app.market.market_engine import MarketEngine
-from app.sector.sector_engine import SectorEngine
-from app.market.relative_strength import RelativeStrengthEngine
-from app.strategy.multi_timeframe import MultiTimeframeEngine
-from app.features.feature_engine import FeatureEngine
+from .scanner_pipeline import ScannerPipeline
 
 
 class ScannerEngine:
 
-    """
-    Main orchestration engine.
-
-    This class coordinates all strategy modules.
-    """
-
     def __init__(self):
 
-        self.feature_engine = FeatureEngine()
-        self.rs_engine = RelativeStrengthEngine()
-        self.mtf_engine = MultiTimeframeEngine()
+        self.pipeline = ScannerPipeline()
 
-    def scan(self, data: Dict[str, Any]):
+    def scan(self):
 
-        """
-        Placeholder implementation.
+        print()
 
-        In future milestones this will:
+        print("========== FLOWFI AI SCANNER ==========")
 
-        1. Validate Market
-        2. Validate Sector
-        3. Validate Trend
-        4. Validate Pullback
-        5. Validate Volume
-        6. Validate Candlestick
-        7. Validate Multi-Timeframe
-        8. Calculate AI Score
-        9. Calculate Entry/SL/Targets
-        """
+        print()
 
-        return {
+        for step in self.pipeline.run():
 
-            "status": "READY",
+            print(f"Running : {step}")
 
-            "message": "Scanner pipeline initialized."
+        print()
 
-        }
+        print("Scanner Finished")
