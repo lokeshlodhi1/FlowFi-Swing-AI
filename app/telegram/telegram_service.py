@@ -1,16 +1,14 @@
 from .telegram_bot import TelegramBot
 from .message_formatter import MessageFormatter
 from .duplicate_checker import DuplicateChecker
-from app.database.telegram_repository import TelegramRepository
+
 
 class TelegramService:
 
     def __init__(self, token, chat_id):
 
         self.bot = TelegramBot(token, chat_id)
-
         self.formatter = MessageFormatter()
-
         self.duplicate = DuplicateChecker()
 
     def send_trade(self, trade):
@@ -23,16 +21,17 @@ class TelegramService:
             return False
 
         if self.duplicate.already_sent(trade.symbol):
+            print(f"⏭️ Duplicate signal skipped: {trade.symbol}")
             return False
 
         message = self.formatter.format(trade)
 
-       response = self.bot.send_message(message)
+        response = self.bot.send_message(message)
 
-if response:
-    print("📨 Telegram Sent")
-    self.duplicate.mark_sent(trade.symbol)
-else:
-    print("❌ Telegram Failed")
+        if response:
+            print("📨 Telegram Sent")
+            self.duplicate.mark_sent(trade.symbol)
+        else:
+            print("❌ Telegram Failed")
 
-return response
+        return response
