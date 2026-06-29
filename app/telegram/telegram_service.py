@@ -1,7 +1,7 @@
 from .telegram_bot import TelegramBot
 from .message_formatter import MessageFormatter
 from .duplicate_checker import DuplicateChecker
-
+from app.database.telegram_repository import TelegramRepository
 
 class TelegramService:
 
