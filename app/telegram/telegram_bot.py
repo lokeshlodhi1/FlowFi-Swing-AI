@@ -9,6 +9,11 @@ class TelegramBot:
 
     def send_message(self, message: str):
 
+        print("\n========== TELEGRAM CONFIG ==========")
+        print("Token Exists :", bool(self.token))
+        print("Chat ID      :", repr(self.chat_id))
+        print("=====================================\n")
+
         url = f"https://api.telegram.org/bot{self.token}/sendMessage"
 
         payload = {
@@ -31,13 +36,15 @@ class TelegramBot:
             print(data)
             print("=======================================\n")
 
-            if data.get("ok"):
+            if data.get("ok") is True:
                 return True
 
             return False
 
         except Exception as e:
 
-            print("Telegram Error:", e)
+            print("\n========== TELEGRAM ERROR ==========")
+            print(str(e))
+            print("====================================\n")
 
             return False
