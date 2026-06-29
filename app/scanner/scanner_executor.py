@@ -1,50 +1,50 @@
-from app.market_data.yahoo_provider import YahooFinanceProvider
-from app.market_data.market_data_service import MarketDataService
+from app.trade.trade_builder import TradeBuilder
+from app.risk.risk_engine import RiskEngine
 
-from .indicator_engine import IndicatorEngine
-from .signal_generator import SignalGenerator
+...
 
+risk = RiskEngine(
 
-class ScannerExecutor:
+    capital=100000,
 
-    def __init__(self):
+    risk_percent=1
 
-        provider = YahooFinanceProvider()
+)
 
-        self.service = MarketDataService(provider)
+entry = float(last["Close"])
 
-        self.signal = SignalGenerator()
+stop = float(last["EMA20"])
 
-    def scan(self, symbol):
+risk_result = risk.calculate(
 
-        market = self.service.get_daily(symbol)
+    entry=entry,
 
-        df = market.data.copy()
+    stop_loss=stop
 
-        df["EMA20"] = IndicatorEngine.ema(df, 20)
+)
 
-        df["EMA50"] = IndicatorEngine.ema(df, 50)
+trade = TradeBuilder().build(
 
-        df["EMA200"] = IndicatorEngine.ema(df, 200)
+    symbol=symbol,
 
-        df["AVGVOL"] = IndicatorEngine.average_volume(df)
+    confidence=95,
 
-        last = df.iloc[-1]
+    entry=entry,
 
-        result = self.signal.generate(
+    stop=stop,
 
-            close=last["Close"],
+    quantity=risk_result.quantity,
 
-            ema20=last["EMA20"],
+    reasons=[
 
-            ema50=last["EMA50"],
+        "EMA Pullback",
 
-            ema200=last["EMA200"],
+        "Trend Strong",
 
-            current_volume=last["Volume"],
+        "High Volume"
 
-            avg_volume=last["AVGVOL"]
+    ]
 
-        )
+)
 
-        return result
+return trade
