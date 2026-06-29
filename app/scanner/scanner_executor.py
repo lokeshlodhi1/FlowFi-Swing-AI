@@ -110,3 +110,8 @@ class ScannerExecutor:
 
         return trade
 result = self.signal_generator.generate(...)
+
+if market_status == "BEARISH":
+    if result["signal"] == "BUY":
+        result["signal"] = "WATCH"
+        result["confidence"] = max(0, result["confidence"] - 20)
