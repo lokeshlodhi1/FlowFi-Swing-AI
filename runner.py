@@ -10,18 +10,15 @@ from app.telegram.telegram_service import TelegramService
 from config import config
 from app.market import MarketTrend
 
+
 class FlowFIRunner:
 
     def __init__(self):
 
         self.provider = YahooFinanceProvider()
-
         self.market = MarketDataService(self.provider)
-
         self.symbols = SymbolManager()
-
         self.scanner = ScannerExecutor()
-
         self.database = DatabaseService()
 
         self.telegram = TelegramService(
@@ -64,23 +61,21 @@ class FlowFIRunner:
                     print(f"❌ Database Error: {db_error}")
 
                 # Send Telegram
-try:
+                try:
 
-    sent = self.telegram.send_trade(trade)
+                    sent = self.telegram.send_trade(trade)
 
-    if sent:
-        print("📨 Telegram Sent")
-    else:
-        print("❌ Telegram Not Sent")
+                    if sent:
+                        print("📨 Telegram Sent")
+                    else:
+                        print("❌ Telegram Not Sent")
 
-except Exception as tg_error:
-
-    print(f"❌ Telegram Error: {tg_error}")
+                except Exception as tg_error:
+                    print(f"❌ Telegram Error: {tg_error}")
 
                 saved += 1
 
             except Exception as e:
-
                 print(f"❌ {symbol}: {e}")
 
         print("\n" + "=" * 60)
