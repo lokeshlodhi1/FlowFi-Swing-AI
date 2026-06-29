@@ -5,7 +5,7 @@ from app.market_data import (
 )
 
 from app.scanner.scanner_executor import ScannerExecutor
-
+from app.database.database_service import DatabaseService
 
 class FlowFIRunner:
 
