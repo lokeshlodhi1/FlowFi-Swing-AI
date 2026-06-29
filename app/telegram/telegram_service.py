@@ -27,8 +27,12 @@ class TelegramService:
 
         message = self.formatter.format(trade)
 
-        response = self.bot.send_message(message)
+       response = self.bot.send_message(message)
 
-        self.duplicate.mark_sent(trade.symbol)
+if response:
+    print("📨 Telegram Sent")
+    self.duplicate.mark_sent(trade.symbol)
+else:
+    print("❌ Telegram Failed")
 
-        return response
+return response
