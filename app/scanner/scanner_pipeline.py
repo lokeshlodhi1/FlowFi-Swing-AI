@@ -4,25 +4,25 @@ class ScannerPipeline:
 
         self.steps = [
 
-            "Market",
+    "Market Filter",
 
-            "Sector",
+    "Trend Filter",
 
-            "Trend",
+    "EMA Pullback",
 
-            "EMA Pullback",
+    "Volume Confirmation",
 
-            "Volume",
+    "Daily Confirmation",
 
-            "Candlestick",
+    "4H Confirmation",
 
-            "Multi Timeframe",
+    "2H Confirmation",
 
-            "AI",
+    "AI Decision",
 
-            "Risk"
+    "Risk Engine"
 
-        ]
+]
 
     def run(self):
 
