@@ -1,15 +1,16 @@
-- name: Debug Files
+- name: Debug Repository
   run: |
+    echo "Current directory:"
     pwd
-    ls -R app/market_data
-    echo "===== market_data/__init__.py ====="
-    cat app/market_data/__init__.py
-    echo "===== runner.py ====="
-    head -40 runner.py
 
-- name: Run FlowFi Scanner
-  env:
-    TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
-    TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-  run: |
-    python main.py
+    echo "Files:"
+    ls
+
+    echo "Market Data:"
+    ls app/market_data
+
+    echo "Contents of __init__.py:"
+    cat app/market_data/__init__.py
+
+    echo "Python version:"
+    python --version
