@@ -8,7 +8,7 @@ from app.scanner.scanner_executor import ScannerExecutor
 from app.database.database_service import DatabaseService
 from app.telegram.telegram_service import TelegramService
 from config import config
-
+from app.market import MarketTrend
 
 class FlowFIRunner:
 
