@@ -1,3 +1,4 @@
+import hashlib
 import requests
 
 
@@ -11,7 +12,8 @@ class TelegramBot:
 
         print("\n========== TELEGRAM CONFIG ==========")
         print("Token Exists :", bool(self.token))
-        print("Chat ID      :", repr(self.chat_id))
+        print("Chat Length  :", len(str(self.chat_id)))
+        print("Chat Hash    :", hashlib.sha256(str(self.chat_id).encode()).hexdigest()[:12])
         print("=====================================\n")
 
         url = f"https://api.telegram.org/bot{self.token}/sendMessage"
@@ -36,15 +38,9 @@ class TelegramBot:
             print(data)
             print("=======================================\n")
 
-            if data.get("ok") is True:
-                return True
-
-            return False
+            return data.get("ok", False)
 
         except Exception as e:
 
-            print("\n========== TELEGRAM ERROR ==========")
-            print(str(e))
-            print("====================================\n")
-
+            print("Telegram Error:", e)
             return False
