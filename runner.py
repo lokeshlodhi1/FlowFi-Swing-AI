@@ -6,7 +6,8 @@ from app.market_data import (
 
 from app.scanner.scanner_executor import ScannerExecutor
 from app.database.database_service import DatabaseService
-
+from app.telegram.telegram_service import TelegramService
+from config import config
 
 class FlowFIRunner:
 
