@@ -23,13 +23,14 @@ class ScannerExecutor:
             risk_percent=1
         )
 
-    def scan(self, symbol: str):
+    def scan(self, symbol: str, market_status="BULLISH"):
 
+        # Download market data
         market = self.market_service.get_daily(symbol)
 
         df = market.data.copy()
 
-        # Fix for latest yfinance MultiIndex columns
+        # Fix latest yfinance MultiIndex columns
         if hasattr(df.columns, "nlevels") and df.columns.nlevels > 1:
             df.columns = df.columns.get_level_values(0)
 
@@ -53,6 +54,7 @@ class ScannerExecutor:
         volume = float(last["Volume"])
         avg_volume = float(last["AVG_VOLUME"])
 
+        # Generate Signal
         result = self.signal_generator.generate(
             close=close,
             ema20=ema20,
@@ -61,6 +63,15 @@ class ScannerExecutor:
             current_volume=volume,
             avg_volume=avg_volume
         )
+
+        # Market Trend Filter
+        if market_status == "BEARISH":
+            if result["signal"] == "BUY":
+                result["signal"] = "WATCH"
+                result["confidence"] = max(
+                    0,
+                    result["confidence"] - 20
+                )
 
         print("\n" + "=" * 60)
         print(symbol)
@@ -77,6 +88,7 @@ class ScannerExecutor:
         else:
             stop = close * 0.98
 
+        # Position Sizing
         risk = self.risk_engine.calculate(
             entry=close,
             stop_loss=stop
@@ -105,13 +117,6 @@ class ScannerExecutor:
             reasons=reasons
         )
 
-        # Override signal with calculated decision
         trade.signal = result["signal"]
 
         return trade
-result = self.signal_generator.generate(...)
-
-if market_status == "BEARISH":
-    if result["signal"] == "BUY":
-        result["signal"] = "WATCH"
-        result["confidence"] = max(0, result["confidence"] - 20)
