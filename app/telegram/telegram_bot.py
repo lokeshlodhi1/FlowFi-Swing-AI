@@ -12,15 +12,32 @@ class TelegramBot:
         url = f"https://api.telegram.org/bot{self.token}/sendMessage"
 
         payload = {
-
             "chat_id": self.chat_id,
-
             "text": message,
-
             "parse_mode": "Markdown"
-
         }
 
-        response = requests.post(url, json=payload)
+        try:
 
-        return response.json()
+            response = requests.post(
+                url,
+                json=payload,
+                timeout=20
+            )
+
+            data = response.json()
+
+            print("\n========== TELEGRAM RESPONSE ==========")
+            print(data)
+            print("=======================================\n")
+
+            if data.get("ok"):
+                return True
+
+            return False
+
+        except Exception as e:
+
+            print("Telegram Error:", e)
+
+            return False
