@@ -64,12 +64,18 @@ class FlowFIRunner:
                     print(f"❌ Database Error: {db_error}")
 
                 # Send Telegram
-                try:
-                    self.telegram.send_trade(trade)
-                    print("📨 Telegram Sent")
+try:
 
-                except Exception as tg_error:
-                    print(f"❌ Telegram Error: {tg_error}")
+    sent = self.telegram.send_trade(trade)
+
+    if sent:
+        print("📨 Telegram Sent")
+    else:
+        print("❌ Telegram Not Sent")
+
+except Exception as tg_error:
+
+    print(f"❌ Telegram Error: {tg_error}")
 
                 saved += 1
 
