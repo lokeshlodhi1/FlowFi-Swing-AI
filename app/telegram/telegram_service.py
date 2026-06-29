@@ -15,12 +15,20 @@ class TelegramService:
 
     def send_trade(self, trade):
 
-        if self.duplicate.already_sent(trade.symbol):
+        if trade is None:
+            return False
 
-            return
+        # Send only high-confidence trades
+        if trade.confidence < 75:
+            return False
+
+        if self.duplicate.already_sent(trade.symbol):
+            return False
 
         message = self.formatter.format(trade)
 
-        self.bot.send_message(message)
+        response = self.bot.send_message(message)
 
         self.duplicate.mark_sent(trade.symbol)
+
+        return response
