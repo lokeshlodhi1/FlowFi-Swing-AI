@@ -1,44 +1,15 @@
-name: FlowFi Live Scanner
+- name: Debug Files
+  run: |
+    pwd
+    ls -R app/market_data
+    echo "===== market_data/__init__.py ====="
+    cat app/market_data/__init__.py
+    echo "===== runner.py ====="
+    head -40 runner.py
 
-on:
-  workflow_dispatch:
-
-  schedule:
-    # 09:20 IST
-    - cron: '50 3 * * 1-5'
-
-    # 11:00 IST
-    - cron: '30 5 * * 1-5'
-
-    # 13:00 IST
-    - cron: '30 7 * * 1-5'
-
-    # 15:00 IST
-    - cron: '30 9 * * 1-5'
-
-jobs:
-  scanner:
-
-    runs-on: ubuntu-latest
-
-    steps:
-
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Install Dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-
-      - name: Run FlowFi Scanner
-        env:
-          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: |
-          python main.py
+- name: Run FlowFi Scanner
+  env:
+    TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+    TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+  run: |
+    python main.py
