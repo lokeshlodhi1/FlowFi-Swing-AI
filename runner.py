@@ -51,11 +51,20 @@ class FlowFIRunner:
                 print(trade)
 
                 try:
-                    self.database.trades.add_trade(trade)
-                    print("✅ Saved to Database")
-                    saved += 1
-                except Exception as db_error:
-                    print(f"❌ Database Error : {db_error}")
+    self.database.trades.add_trade(trade)
+    print("✅ Saved to Database")
+
+    try:
+        self.telegram.send_trade(trade)
+        print("📨 Telegram Sent")
+
+    except Exception as tg_error:
+        print(f"❌ Telegram Error : {tg_error}")
+
+    saved += 1
+
+except Exception as db_error:
+    print(f"❌ Database Error : {db_error}")
 
             except Exception as e:
 
