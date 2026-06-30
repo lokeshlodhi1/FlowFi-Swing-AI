@@ -6,7 +6,7 @@ class MessageFormatter:
         reasons = "\n".join([f"✅ {r}" for r in trade.reasons])
 
         return f"""
-🚀 *FLOWFI AI ALERT*
+🚀 *FLOWFI AI ALERT                      *
 
 🟢 *{trade.signal}*
 
