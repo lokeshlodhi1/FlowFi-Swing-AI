@@ -1,72 +1,57 @@
-import pandas as pd
+from app.market.market_trend import MarketTrend
 
 
 class MarketEngine:
 
-    def __init__(self, nifty_df, bank_df):
+    def __init__(self):
+        self.market_trend = MarketTrend()
 
-        self.nifty = nifty_df
+    def get_market_status(self):
 
-        self.bank = bank_df
+        trend = self.market_trend.get_trend()
 
-    def market_trend(self):
-
-        n = self.nifty.iloc[-1]
-
-        b = self.bank.iloc[-1]
-
-        nifty_bull = (
-
-            n["EMA20"]
-
-            >
-
-            n["EMA50"]
-
-            >
-
-            n["EMA200"]
-
-        )
-
-        bank_bull = (
-
-            b["EMA20"]
-
-            >
-
-            b["EMA50"]
-
-            >
-
-            b["EMA200"]
-
-        )
-
-        if nifty_bull and bank_bull:
-
-            return {
-
-                "Market": "Bullish",
-
-                "Trade": "BUY"
-
-            }
-
-        if (not nifty_bull) and (not bank_bull):
-
-            return {
-
-                "Market": "Bearish",
-
-                "Trade": "SELL"
-
-            }
-
-        return {
-
-            "Market": "Neutral",
-
-            "Trade": "WAIT"
-
+        market_status = {
+            "trend": trend.trend,
+            "trend_strength": trend.trend_strength,
+            "buy_allowed": False,
+            "watch_allowed": False,
+            "risk_level": "LOW",
+            "position_size": 0.0,
         }
+
+        # Strong Bull Market
+        if (
+            trend.trend == "BULLISH"
+            and trend.bullish_alignment
+            and trend.trend_strength >= 100
+        ):
+            market_status["buy_allowed"] = True
+            market_status["watch_allowed"] = True
+            market_status["risk_level"] = "HIGH"
+            market_status["position_size"] = 1.0
+
+        # Bull Market
+        elif (
+            trend.trend == "BULLISH"
+            and trend.trend_strength >= 75
+        ):
+            market_status["buy_allowed"] = True
+            market_status["watch_allowed"] = True
+            market_status["risk_level"] = "MEDIUM"
+            market_status["position_size"] = 0.75
+
+        # Sideways Market
+        elif trend.trend == "SIDEWAYS":
+            market_status["buy_allowed"] = False
+            market_status["watch_allowed"] = True
+            market_status["risk_level"] = "LOW"
+            market_status["position_size"] = 0.25
+
+        # Bear Market
+        else:
+            market_status["buy_allowed"] = False
+            market_status["watch_allowed"] = False
+            market_status["risk_level"] = "NONE"
+            market_status["position_size"] = 0.0
+
+        return market_status
