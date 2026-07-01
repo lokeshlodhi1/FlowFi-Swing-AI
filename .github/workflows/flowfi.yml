@@ -3,6 +3,20 @@ name: FlowFi Live Scanner
 on:
   workflow_dispatch:
 
+  schedule:
+    # Monday-Friday (UTC)
+    # 09:15 IST
+    - cron: "45 3 * * 1-5"
+
+    # 11:00 IST
+    - cron: "30 5 * * 1-5"
+
+    # 01:00 PM IST
+    - cron: "30 7 * * 1-5"
+
+    # 03:25 PM IST
+    - cron: "55 9 * * 1-5"
+
 jobs:
   scanner:
     runs-on: ubuntu-latest
@@ -16,24 +30,12 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Debug Repository
-        run: |
-          pwd
-          echo "========================"
-          ls
-          echo "========================"
-          ls app
-          echo "========================"
-          ls app/market_data
-          echo "========================"
-          cat app/market_data/__init__.py
-
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run Scanner
+      - name: Run FlowFi Scanner
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
