@@ -1,6 +1,19 @@
+from dataclasses import dataclass
+
 from app.market_data.yahoo_provider import YahooFinanceProvider
 from app.market_data.market_data_service import MarketDataService
 from app.scanner.indicator_engine import IndicatorEngine
+
+
+@dataclass
+class MarketTrendResult:
+    trend: str
+    close: float
+    ema20: float
+    ema50: float
+    ema200: float
+    trend_strength: int
+    bullish_alignment: bool
 
 
 class MarketTrend:
@@ -23,16 +36,48 @@ class MarketTrend:
         df["EMA50"] = IndicatorEngine.ema(df, 50)
         df["EMA200"] = IndicatorEngine.ema(df, 200)
 
-        last = df.dropna().iloc[-1]
+        df = df.dropna()
 
+        last = df.iloc[-1]
+
+        close = float(last["Close"])
         ema20 = float(last["EMA20"])
         ema50 = float(last["EMA50"])
         ema200 = float(last["EMA200"])
 
-        if ema20 > ema50 > ema200:
-            return "BULLISH"
+        trend_strength = 0
 
-        elif ema20 < ema50 < ema200:
-            return "BEARISH"
+        if close > ema20:
+            trend_strength += 25
 
-        return "SIDEWAYS"
+        if ema20 > ema50:
+            trend_strength += 25
+
+        if ema50 > ema200:
+            trend_strength += 25
+
+        if close > ema200:
+            trend_strength += 25
+
+        bullish_alignment = ema20 > ema50 > ema200
+
+        bearish_alignment = ema20 < ema50 < ema200
+
+        if bullish_alignment:
+            trend = "BULLISH"
+
+        elif bearish_alignment:
+            trend = "BEARISH"
+
+        else:
+            trend = "SIDEWAYS"
+
+        return MarketTrendResult(
+            trend=trend,
+            close=close,
+            ema20=ema20,
+            ema50=ema50,
+            ema200=ema200,
+            trend_strength=trend_strength,
+            bullish_alignment=bullish_alignment,
+        )
