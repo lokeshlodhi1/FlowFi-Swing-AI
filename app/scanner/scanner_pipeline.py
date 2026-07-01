@@ -1,6 +1,6 @@
 from app.market.market_engine import MarketEngine
-from app.scanner.relative_strength import RelativeStrength
-from app.scanner.stock_quality import StockQuality
+from app.scanner.stock_filter import StockFilter
+from app.scanner.entry_engine import EntryEngine
 
 
 class ScannerPipeline:
@@ -9,48 +9,31 @@ class ScannerPipeline:
 
         self.market_engine = MarketEngine()
 
-        self.steps = [
-
-            "Market Filter",
-
-            "Relative Strength",
-
-            "Stock Quality",
-
-            "Entry Engine",
-
-            "Risk Engine",
-
-            "AI Decision",
-
-            "Telegram Signal"
-
-        ]
-
-    def get_pipeline(self):
-        return self.steps
-
     def analyse_stock(
 
         self,
 
-        stock_close,
+        dataframe,
 
-        market_close,
+        price,
 
-        liquidity_score,
+        avg_volume,
 
-        volume_score,
+        delivery,
 
-        atr_score,
+        market_cap,
 
-        delivery_score,
+        atr_percent,
 
-        market_cap_score,
+        relative_strength,
 
     ):
 
+        # ------------------------------------
         # STEP 1
+        # Market Check
+        # ------------------------------------
+
         market = self.market_engine.analyse_market()
 
         if not market["buy_allowed"]:
@@ -59,59 +42,74 @@ class ScannerPipeline:
 
                 "signal": "NO_SCAN",
 
-                "reason": "Market not suitable",
-
-                "market": market
+                "reason": "Market Filter Failed"
 
             }
 
+        # ------------------------------------
         # STEP 2
-        rs = RelativeStrength(
+        # Stock Filter
+        # ------------------------------------
 
-            stock_close,
+        stock = StockFilter(
 
-            market_close
+            price,
 
-        ).calculate()
+            avg_volume,
 
-        # STEP 3
-        quality = StockQuality(
+            delivery,
 
-            rs.score,
+            market_cap,
 
-            liquidity_score,
+            atr_percent,
 
-            volume_score,
-
-            atr_score,
-
-            delivery_score,
-
-            market_cap_score
+            relative_strength,
 
         ).evaluate()
 
-        # STEP 4
-        if quality.score >= 90:
+        if not stock.passed:
 
-            signal = "BUY"
+            return {
 
-        elif quality.score >= 75:
+                "signal": "REJECT",
 
-            signal = "WATCH"
+                "reason": stock.reason,
 
-        else:
+                "score": stock.score,
 
-            signal = "REJECT"
+            }
+
+        # ------------------------------------
+        # STEP 3
+        # Entry Engine
+        # ------------------------------------
+
+        entry = EntryEngine(
+
+            dataframe
+
+        ).analyse()
 
         return {
 
-            "signal": signal,
+            "signal": entry["signal"],
 
-            "market": market,
+            "strategy": entry["strategy"],
 
-            "relative_strength": rs,
+            "confidence": entry["confidence"],
 
-            "quality": quality
+            "entry": entry["entry"],
+
+            "stop_loss": entry["stop_loss"],
+
+            "target1": entry["target1"],
+
+            "target2": entry["target2"],
+
+            "risk_reward": entry["risk_reward"],
+
+            "stock_score": stock.score,
+
+            "reason": entry["reason"],
 
         }
