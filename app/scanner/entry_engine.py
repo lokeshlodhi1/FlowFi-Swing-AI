@@ -1,5 +1,6 @@
 from app.scanner.strategies.pullback_strategy import PullbackStrategy
 from app.scanner.strategies.breakout_strategy import BreakoutStrategy
+from app.scanner.strategies.vcp_strategy import VCPStrategy
 
 
 class EntryEngine:
@@ -10,41 +11,62 @@ class EntryEngine:
 
     def analyse(self):
 
-        pullback = PullbackStrategy(self.df).scan()
-
-        breakout = BreakoutStrategy(self.df).scan()
-
         strategies = []
+
+        # -----------------------------------
+        # Pullback Strategy
+        # -----------------------------------
+
+        pullback = PullbackStrategy(self.df).scan()
 
         if pullback.valid:
             strategies.append(pullback)
 
+        # -----------------------------------
+        # Breakout Strategy
+        # -----------------------------------
+
+        breakout = BreakoutStrategy(self.df).scan()
+
         if breakout.valid:
             strategies.append(breakout)
 
-        if len(strategies) == 0:
+        # -----------------------------------
+        # VCP Strategy
+        # -----------------------------------
+
+        vcp = VCPStrategy(self.df).scan()
+
+        if vcp.valid:
+            strategies.append(vcp)
+
+        # -----------------------------------
+        # No Valid Strategy
+        # -----------------------------------
+
+        if not strategies:
 
             return {
-
                 "signal": "WATCH",
-
                 "strategy": None,
-
-                "reason": "No Valid Entry"
-
+                "confidence": 0,
+                "entry": 0,
+                "stop_loss": 0,
+                "target1": 0,
+                "target2": 0,
+                "risk_reward": 0,
+                "reason": "No Valid Entry",
             }
 
-        best = max(
+        # -----------------------------------
+        # Select Best Strategy
+        # -----------------------------------
 
-            strategies,
-
-            key=lambda x: x.confidence
-
-        )
+        best = max(strategies, key=lambda strategy: strategy.confidence)
 
         return {
 
-            "signal": best.reason,
+            "signal": "BUY" if best.valid else "WATCH",
 
             "strategy": best.setup,
 
@@ -58,6 +80,8 @@ class EntryEngine:
 
             "target2": best.target2,
 
-            "risk_reward": best.risk_reward
+            "risk_reward": best.risk_reward,
+
+            "reason": best.reason,
 
         }
