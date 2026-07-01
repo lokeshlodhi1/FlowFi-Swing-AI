@@ -39,6 +39,7 @@ class ScannerExecutor:
         df["EMA50"] = IndicatorEngine.ema(df, 50)
         df["EMA200"] = IndicatorEngine.ema(df, 200)
         df["AVG_VOLUME"] = IndicatorEngine.average_volume(df)
+        df["ATR"] = IndicatorEngine.atr(df)
 
         df = df.dropna()
 
@@ -53,6 +54,7 @@ class ScannerExecutor:
         ema200 = float(last["EMA200"])
         volume = float(last["Volume"])
         avg_volume = float(last["AVG_VOLUME"])
+        atr = float(last["ATR"])
 
         # Generate Signal
         result = self.signal_generator.generate(
@@ -82,11 +84,29 @@ class ScannerExecutor:
         if result["signal"] == "IGNORE":
             return None
 
-        # Stop Loss
-        if ema20 < close:
-            stop = ema20
-        else:
-            stop = close * 0.98
+        # -------------------------------------------------
+        # Professional Swing Stop Loss
+        # -------------------------------------------------
+
+        swing_low = float(df["Low"].tail(10).min())
+
+        atr_stop = close - (1.5 * atr)
+
+        # Choose safer stop
+        stop = min(swing_low, atr_stop)
+
+        # Don't allow stop more than 8% away
+        if ((close - stop) / close) > 0.08:
+            stop = close * 0.92
+
+        # Reject trades with stop closer than 2%
+        risk_percent = ((close - stop) / close) * 100
+
+        if risk_percent < 2:
+            print("Rejected : Stop Loss too tight for swing trade")
+            return None
+
+        # -------------------------------------------------
 
         # Position Sizing
         risk = self.risk_engine.calculate(
@@ -107,6 +127,8 @@ class ScannerExecutor:
 
         if result["volume"]:
             reasons.append("High Volume")
+
+        reasons.append("ATR Stop Loss")
 
         trade = TradeBuilder().build(
             symbol=symbol,
