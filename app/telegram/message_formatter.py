@@ -1,30 +1,79 @@
+from datetime import datetime
+import uuid
+
+
 class MessageFormatter:
 
-    @staticmethod
-    def format(trade):
+    def format(self, trade):
 
-        reasons = "\n".join([f"✅ {r}" for r in trade.reasons])
+        trade_id = f"FLOWFI-{datetime.now().strftime('%Y%m%d')}-{str(uuid.uuid4())[:4].upper()}"
 
-        return f"""
-🚀 *FLOWFI AI ALERT                      *
+        now = datetime.now()
 
-🟢 *{trade.signal}*
+        date = now.strftime("%d-%b-%Y")
+        time = now.strftime("%I:%M %p")
 
-📊 Stock : *{trade.symbol}*
+        confidence_bar = "█" * int(trade.confidence / 10)
+        confidence_bar += "░" * (10 - len(confidence_bar))
 
-🎯 Entry : ₹{trade.entry}
+        reasons = ""
 
-🛑 Stop Loss : ₹{trade.stop_loss}
+        for reason in trade.reasons:
+            reasons += f"✅ {reason}\n"
 
-🎯 Target 1 : ₹{trade.target1}
+        message = f"""
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🚀 <b>FLOWFI AI SWING SCANNER</b>
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-🎯 Target 2 : ₹{trade.target2}
+🟢 <b>{trade.signal}</b>
 
-📦 Quantity : {trade.quantity}
+🏷 <b>Trade ID</b>
+<code>{trade_id}</code>
 
-⭐ Confidence : {trade.confidence}%
+🏢 <b>Stock</b>
+<code>{trade.symbol}</code>
 
-📈 RR : {trade.risk_reward}
+⏰ <b>Timeframe</b>
+1 Day Swing
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💰 <b>Entry</b>
+₹ {trade.entry:.2f}
+
+🛑 <b>Stop Loss</b>
+₹ {trade.stop_loss:.2f}
+
+🎯 <b>Target 1</b>
+₹ {trade.target1:.2f}
+
+🎯 <b>Target 2</b>
+₹ {trade.target2:.2f}
+
+📦 <b>Quantity</b>
+{trade.quantity}
+
+⭐ <b>Confidence</b>
+{confidence_bar}
+{trade.confidence}%
+
+📊 <b>Risk : Reward</b>
+1 : {trade.risk_reward}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📈 <b>Trade Setup</b>
 
 {reasons}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📅 <b>Date</b> : {date}
+🕒 <b>Time</b> : {time}
+
+⚠️ <i>Educational Purpose Only. Not Financial Advice.</i>
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 """
+
+        return message
