@@ -28,11 +28,12 @@ class FlowFIRunner:
 
     def run(self):
 
+        # Load both watchlists
         nifty50 = self.symbols.load("nifty50")
-            midcap100 = self.symbols.load("niftymidcap100")
-            
-            # Merge and remove duplicates
-            stocks = list(dict.fromkeys(nifty50 + midcap100))
+        midcap100 = self.symbols.load("niftymidcap100")
+
+        # Merge and remove duplicates
+        stocks = list(dict.fromkeys(nifty50 + midcap100))
 
         print("=" * 60)
         print("FLOWFI AI SCANNER")
