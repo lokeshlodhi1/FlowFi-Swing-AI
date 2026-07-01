@@ -1,92 +1,153 @@
-from app.strategies.market_filter import MarketFilter
-from app.strategies.trend_filter import TrendFilter
-from app.strategies.ema_pullback import EMAPullback
-from app.strategies.volume_confirmation import VolumeConfirmation
+from dataclasses import dataclass
+
+from app.scanner.entry_engine import EntryEngine
+from app.risk.risk_engine import RiskEngine
+
+
+@dataclass
+class TradingSignal:
+
+    signal: str
+
+    strategy: str
+
+    confidence: int
+
+    entry: float
+
+    stop_loss: float
+
+    target1: float
+
+    target2: float
+
+    quantity: int
+
+    position_value: float
+
+    risk_reward: float
+
+    reason: str
 
 
 class SignalGenerator:
 
-    def __init__(self):
+    def __init__(
 
-        self.market = MarketFilter()
-        self.trend = TrendFilter()
-        self.pullback = EMAPullback()
-        self.volume = VolumeConfirmation()
-
-    def generate(
         self,
-        close,
-        ema20,
-        ema50,
-        ema200,
-        current_volume,
-        avg_volume
+
+        capital,
+
+        risk_percent=1.0,
+
     ):
 
-        result = {}
+        self.capital = capital
 
-        # -------------------------
-        # Market Filter
-        # -------------------------
-        result["market"] = True
+        self.risk_percent = risk_percent
 
-        # -------------------------
-        # Trend
-        # -------------------------
-        result["trend"] = self.trend.bullish(
-            ema20,
-            ema50,
-            ema200
+    def generate(self, dataframe):
+
+        entry_engine = EntryEngine(dataframe)
+
+        result = entry_engine.analyse()
+
+        if result["signal"] == "WATCH":
+
+            return TradingSignal(
+
+                signal="WATCH",
+
+                strategy="NONE",
+
+                confidence=0,
+
+                entry=0,
+
+                stop_loss=0,
+
+                target1=0,
+
+                target2=0,
+
+                quantity=0,
+
+                position_value=0,
+
+                risk_reward=0,
+
+                reason="No Valid Strategy"
+
+            )
+
+        risk = RiskEngine(
+
+            self.capital,
+
+            self.risk_percent
+
+        ).calculate(
+
+            result["entry"],
+
+            result["stop_loss"],
+
+            result["target1"],
+
+            result["target2"]
+
         )
 
-        # -------------------------
-        # EMA Pullback
-        # -------------------------
-        result["ema"] = self.pullback.bullish(
-            close,
-            ema20,
-            tolerance=0.02
+        if not risk.valid:
+
+            return TradingSignal(
+
+                signal="REJECT",
+
+                strategy=result["strategy"],
+
+                confidence=result["confidence"],
+
+                entry=result["entry"],
+
+                stop_loss=result["stop_loss"],
+
+                target1=result["target1"],
+
+                target2=result["target2"],
+
+                quantity=0,
+
+                position_value=0,
+
+                risk_reward=risk.risk_reward,
+
+                reason=risk.reason
+
+            )
+
+        return TradingSignal(
+
+            signal=result["signal"],
+
+            strategy=result["strategy"],
+
+            confidence=result["confidence"],
+
+            entry=result["entry"],
+
+            stop_loss=result["stop_loss"],
+
+            target1=result["target1"],
+
+            target2=result["target2"],
+
+            quantity=risk.quantity,
+
+            position_value=risk.position_value,
+
+            risk_reward=risk.risk_reward,
+
+            reason="Trade Approved"
+
         )
-
-        # -------------------------
-        # Volume
-        # -------------------------
-        result["volume"] = self.volume.is_valid(
-            current_volume,
-            avg_volume
-        )
-
-        # -------------------------
-        # AI Score
-        # -------------------------
-        score = 0
-
-        if result["market"]:
-            score += 20
-
-        if result["trend"]:
-            score += 20
-
-        if result["ema"]:
-            score += 30
-
-        if result["volume"]:
-            score += 30
-
-        result["score"] = score
-
-        # -------------------------
-        # Decision
-        # -------------------------
-        if score >= 90:
-            result["signal"] = "BUY"
-
-        elif score >= 60:
-            result["signal"] = "WATCH"
-
-        else:
-            result["signal"] = "IGNORE"
-
-        result["confidence"] = score
-
-        return result
