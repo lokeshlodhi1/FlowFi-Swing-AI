@@ -94,6 +94,7 @@ class ScannerExecutor:
         df = df.dropna()
 
         return df
+
     # ----------------------------------------------------------
     # SCAN SINGLE STOCK
     # ----------------------------------------------------------
@@ -154,6 +155,8 @@ class ScannerExecutor:
             ).calculate(
                 entry["entry"],
                 entry["stop_loss"],
+                entry["target1"],
+                entry["target2"],
             )
 
             if not risk.valid:
@@ -211,6 +214,7 @@ class ScannerExecutor:
             )
 
             return None
+
     # ----------------------------------------------------------
     # SCAN COMPLETE MARKET
     # ----------------------------------------------------------
@@ -426,6 +430,7 @@ class ScannerExecutor:
                 stats["watch"] += 1
 
         return stats
+
     # ----------------------------------------------------------
     # SUPPORT & RESISTANCE
     # ----------------------------------------------------------
@@ -553,6 +558,7 @@ class ScannerExecutor:
         ) * 100
 
         return distance <= tolerance
+
     # ----------------------------------------------------------
     # VOLUME ANALYSIS
     # ----------------------------------------------------------
@@ -719,6 +725,7 @@ class ScannerExecutor:
             volume >= avg_volume * 1.5
 
         )
+
     # ----------------------------------------------------------
     # TREND & SCORING
     # ----------------------------------------------------------
@@ -830,6 +837,21 @@ class ScannerExecutor:
 
         return 0
 
+    def timeframe_score(
+        self,
+        weekly=True,
+        daily=True,
+        h4=True,
+        h2=True,
+    ):
+
+        return MultiTimeframe().confirm(
+            weekly,
+            daily,
+            h4,
+            h2,
+        ).score
+
     def institutional_score(
         self,
         df,
@@ -857,10 +879,8 @@ class ScannerExecutor:
                 stop_loss,
                 target,
             )
+            + timeframe.score
         )
-
-        if timeframe:
-            score += 20
 
         return min(score, 100)
 
