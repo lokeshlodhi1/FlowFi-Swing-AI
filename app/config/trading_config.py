@@ -84,4 +84,5 @@ WATCH_SCORE = 70
 # =====================================================
 
 MIN_TREND_SCORE = 70
-GOOD
+GOOD_TREND_SCORE = 90
+BEST_TREND_SCORE = 120
