@@ -88,3 +88,66 @@ class MarketRegimeEngine:
         score = max(0, min(score, 100))
 
         print(f"[Market Regime] Score={score}")
+        if score >= 85:
+            return MarketRegime(
+                regime="STRONG_BULL",
+                score=score,
+                buy_allowed=True,
+                watch_allowed=True,
+                risk_multiplier=1.0,
+                max_positions=10,
+                allowed_strategies=[
+                    "PULLBACK",
+                    "BREAKOUT",
+                    "VCP",
+                ],
+            )
+
+        elif score >= 70:
+            return MarketRegime(
+                regime="BULL",
+                score=score,
+                buy_allowed=True,
+                watch_allowed=True,
+                risk_multiplier=0.75,
+                max_positions=7,
+                allowed_strategies=[
+                    "PULLBACK",
+                    "BREAKOUT",
+                    "VCP",
+                ],
+            )
+
+        elif score >= 55:
+            return MarketRegime(
+                regime="SIDEWAYS",
+                score=score,
+                buy_allowed=True,
+                watch_allowed=True,
+                risk_multiplier=0.50,
+                max_positions=5,
+                allowed_strategies=[
+                    "PULLBACK",
+                ],
+            )
+
+        elif score >= 40:
+            return MarketRegime(
+                regime="CAUTION",
+                score=score,
+                buy_allowed=False,
+                watch_allowed=True,
+                risk_multiplier=0.25,
+                max_positions=2,
+                allowed_strategies=[],
+            )
+
+        return MarketRegime(
+            regime="BEAR",
+            score=score,
+            buy_allowed=False,
+            watch_allowed=False,
+            risk_multiplier=0.0,
+            max_positions=0,
+            allowed_strategies=[],
+        )
