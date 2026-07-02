@@ -48,17 +48,20 @@ class ScannerExecutor:
             return None
 
     def prepare_dataframe(self, df):
-        df = df.copy()
-# Fix Yahoo Finance MultiIndex columns
-if hasattr(df.columns, "nlevels") and df.columns.nlevels > 1:
-    df.columns = df.columns.get_level_values(0)
-        df["EMA_FAST"] = self.indicators.ema(df, 20)
-        df["EMA_MEDIUM"] = self.indicators.ema(df, 50)
-        df["EMA_SLOW"] = self.indicators.ema(df, 200)
-        df["RSI"] = self.indicators.rsi(df)
-        df["ATR"] = self.indicators.atr(df)
-        df["RVOL"] = self.indicators.relative_volume(df)
-        return df
+    df = df.copy()
+
+    # Fix Yahoo Finance MultiIndex columns
+    if hasattr(df.columns, "nlevels") and df.columns.nlevels > 1:
+        df.columns = df.columns.get_level_values(0)
+
+    df["EMA20"] = self.indicators.ema(df, 20)
+    df["EMA50"] = self.indicators.ema(df, 50)
+    df["EMA200"] = self.indicators.ema(df, 200)
+    df["RSI"] = self.indicators.rsi(df)
+    df["ATR"] = self.indicators.atr(df)
+    df["RVOL"] = self.indicators.relative_volume(df)
+
+    return df
 
     # -------------------------------------------------------------------------
     # Core Market & Stock Scanning Logic
