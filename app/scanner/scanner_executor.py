@@ -25,9 +25,9 @@ class ScannerExecutor:
         self.signal_ranker = SignalRanker()
         self.portfolio = PortfolioManager(capital=1000000)
         
-        self.capital = 1000000
-        self.risk_percent = 1.0
-        self.max_signals = 10
+        self.capital = INITIAL_CAPITAL
+        self.risk_percent = RISK_PERCENT
+        self.max_signals = MAX_SIGNALS
 
     # -------------------------------------------------------------------------
     # Data & Dataframe Preparation
@@ -49,9 +49,9 @@ class ScannerExecutor:
 
     def prepare_dataframe(self, df):
         df = df.copy()
-        df["EMA20"] = self.indicators.ema(df, 20)
-        df["EMA50"] = self.indicators.ema(df, 50)
-        df["EMA200"] = self.indicators.ema(df, 200)
+        df["EMA_FAST"] = self.indicators.ema(df, 20)
+        df["EMA_MEDIUM"] = self.indicators.ema(df, 50)
+        df["EMA_SLOW"] = self.indicators.ema(df, 200)
         df["RSI"] = self.indicators.rsi(df)
         df["ATR"] = self.indicators.atr(df)
         df["RVOL"] = self.indicators.relative_volume(df)
