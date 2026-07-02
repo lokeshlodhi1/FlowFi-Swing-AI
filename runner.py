@@ -50,7 +50,8 @@ class FlowFIRunner:
 
             try:
 
-                trade = self.scanner.scan(symbol)
+                # FIXED: ScannerExecutor uses scan_stock()
+                trade = self.scanner.scan_stock(symbol)
 
                 if trade is None:
                     continue
