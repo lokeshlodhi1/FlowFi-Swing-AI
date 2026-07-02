@@ -255,15 +255,15 @@ class ScannerExecutor:
     # -------------------------------------------------------------------------
     # Technical Support & Resistance Math
     # -------------------------------------------------------------------------
-    def find_swing_high(self, df, LOOKBACK_SWING):
-        if len(df) < lookback:
-            return None
-        return float(df["High"].tail(lookback).max())
+    defdef find_swing_high(self, df, lookback=LOOKBACK_SWING):
+    if len(df) < lookback:
+        return None
+    return float(df["High"].tail(lookback).max())
 
-    def find_swing_low(self, df, LOOKBACK_SWING):
-        if len(df) < lookback:
-            return None
-        return float(df["Low"].tail(lookback).min())
+    def find_swing_low(self, df, lookback=LOOKBACK_SWING):
+    if len(df) < lookback:
+        return None
+    return float(df["Low"].tail(lookback).min())
 
     def calculate_pullback_percentage(self, current_price, swing_high):
         if swing_high is None:
@@ -281,15 +281,14 @@ class ScannerExecutor:
             return 0
         return round((atr / close) * 100, 2)
 
-    def find_resistance(self, df, LOOKBACK_SR):
-        if len(df) < lookback:
-            return None
-        return round(float(df["High"].tail(lookback).max()), 2)
-
-    def find_support(self, df, LOOKBACK_SR):
-        if len(df) < lookback:
-            return None
-        return round(float(df["Low"].tail(lookback).min()), 2)
+    def find_resistance(self, df, lookback=LOOKBACK_SR):
+    if len(df) < lookback:
+        return None
+    return round(float(df["High"].tail(lookback).max()), 2)
+    def find_support(self, df, lookback=LOOKBACK_SR):
+    if len(df) < lookback:
+        return None
+    return round(float(df["Low"].tail(lookback).min()), 2)
 
     def resistance_distance(self, close, resistance):
         if resistance is None:
