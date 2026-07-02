@@ -8,7 +8,6 @@ from app.scanner.scanner_executor import ScannerExecutor
 from app.database.database_service import DatabaseService
 from app.telegram.telegram_service import TelegramService
 from config import config
-from app.market import MarketTrend
 
 
 class FlowFIRunner:
@@ -18,27 +17,26 @@ class FlowFIRunner:
         self.provider = YahooFinanceProvider()
         self.market = MarketDataService(self.provider)
         self.symbols = SymbolManager()
+
         self.scanner = ScannerExecutor()
+
         self.database = DatabaseService()
 
         self.telegram = TelegramService(
             config.TELEGRAM_TOKEN,
-            config.TELEGRAM_CHAT_ID
+            config.TELEGRAM_CHAT_ID,
         )
 
     def run(self):
 
-        # Load both watchlists
         nifty50 = self.symbols.load("nifty50")
         midcap100 = self.symbols.load("niftymidcap100")
 
-        # Merge and remove duplicates
         stocks = list(dict.fromkeys(nifty50 + midcap100))
 
         print("=" * 60)
         print("FLOWFI AI SCANNER")
         print("=" * 60)
-
         print(f"Scanning {len(stocks)} Stocks...\n")
 
         total = 0
@@ -50,41 +48,69 @@ class FlowFIRunner:
 
             try:
 
-                # FIXED: ScannerExecutor uses scan_stock()
                 trade = self.scanner.scan_stock(symbol)
 
                 if trade is None:
                     continue
 
+                # Skip rejected and watch signals
+                if trade.get("signal") not in ["BUY", "STRONG BUY"]:
+                    print(
+                        f"❌ {symbol} : "
+                        f"{trade.get('reason','Rejected')}"
+                    )
+                    continue
+
                 print(trade)
 
-                # Save to Database
+                # -----------------------------
+                # Save Database
+                # -----------------------------
+
                 try:
+
                     self.database.trades.add_trade(trade)
+
                     print("✅ Saved to Database")
 
-                except Exception as db_error:
-                    print(f"❌ Database Error: {db_error}")
+                    saved += 1
 
-                # Send Telegram
+                except Exception as db_error:
+
+                    print(
+                        f"❌ Database Error: {db_error}"
+                    )
+
+                # -----------------------------
+                # Telegram
+                # -----------------------------
+
                 try:
 
-                    sent = self.telegram.send_trade(trade)
+                    sent = self.telegram.send_trade(
+                        trade
+                    )
 
                     if sent:
+
                         print("📨 Telegram Sent")
+
                     else:
+
                         print("❌ Telegram Not Sent")
 
                 except Exception as tg_error:
-                    print(f"❌ Telegram Error: {tg_error}")
 
-                saved += 1
+                    print(
+                        f"❌ Telegram Error: {tg_error}"
+                    )
 
             except Exception as e:
+
                 print(f"❌ {symbol}: {e}")
 
-        print("\n" + "=" * 60)
+        print()
+        print("=" * 60)
         print("SCAN COMPLETED")
         print("=" * 60)
         print(f"Stocks Scanned : {total}")
