@@ -68,8 +68,9 @@ LOOKBACK_SWING = 20
 LOOKBACK_SR = 30
 MIN_DATA = 200
 
-# Breakout tolerance in percentage
 BREAKOUT_TOLERANCE = 0.5
+SUPPORT_TOLERANCE = 2.0
+RESISTANCE_TOLERANCE = 2.0
 
 # =====================================================
 # AI Score Settings
