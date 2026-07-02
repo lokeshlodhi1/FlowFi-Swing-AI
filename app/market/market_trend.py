@@ -60,17 +60,32 @@ class MarketTrend:
             trend_strength += 25
 
         bullish_alignment = ema20 > ema50 > ema200
+bearish_alignment = ema20 < ema50 < ema200
 
-        bearish_alignment = ema20 < ema50 < ema200
+# Improved trend classification
+if bullish_alignment:
+    trend = "BULLISH"
 
-        if bullish_alignment:
-            trend = "BULLISH"
+elif trend_strength >= 75:
+    trend = "BULLISH"
 
-        elif bearish_alignment:
-            trend = "BEARISH"
+elif trend_strength >= 50:
+    trend = "SIDEWAYS"
 
-        else:
-            trend = "SIDEWAYS"
+elif bearish_alignment:
+    trend = "BEARISH"
+
+else:
+    trend = "SIDEWAYS"
+
+   print(
+    f"NIFTY Trend: {trend} | "
+    f"Close={close:.2f} | "
+    f"EMA20={ema20:.2f} | "
+    f"EMA50={ema50:.2f} | "
+    f"EMA200={ema200:.2f} | "
+    f"Strength={trend_strength}"
+)
 
         return MarketTrendResult(
             trend=trend,
@@ -79,5 +94,6 @@ class MarketTrend:
             ema50=ema50,
             ema200=ema200,
             trend_strength=trend_strength,
-            bullish_alignment=bullish_alignment,
+            
+bullish_alignment=(trend == "BULLISH"),,
         )
