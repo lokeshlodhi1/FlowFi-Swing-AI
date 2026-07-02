@@ -3,6 +3,7 @@ from datetime import datetime
 import numpy as np
 import pandas as pd
 import yfinance as yf
+from app.config.trading_config import *
 
 # Engine imports from your local app package
 from app.scanner.indicator_engine import IndicatorEngine
