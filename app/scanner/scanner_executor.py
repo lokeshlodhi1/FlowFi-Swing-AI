@@ -249,12 +249,12 @@ class ScannerExecutor:
     # -------------------------------------------------------------------------
     # Technical Support & Resistance Math
     # -------------------------------------------------------------------------
-    def find_swing_high(self, df, lookback=20):
+    def find_swing_high(self, df, LOOKBACK_SWING):
         if len(df) < lookback:
             return None
         return float(df["High"].tail(lookback).max())
 
-    def find_swing_low(self, df, lookback=20):
+    def find_swing_low(self, df, LOOKBACK_SWING):
         if len(df) < lookback:
             return None
         return float(df["Low"].tail(lookback).min())
@@ -275,12 +275,12 @@ class ScannerExecutor:
             return 0
         return round((atr / close) * 100, 2)
 
-    def find_resistance(self, df, lookback=30):
+    def find_resistance(self, df, LOOKBACK_SR):
         if len(df) < lookback:
             return None
         return round(float(df["High"].tail(lookback).max()), 2)
 
-    def find_support(self, df, lookback=30):
+    def find_support(self, df, LOOKBACK_SR):
         if len(df) < lookback:
             return None
         return round(float(df["Low"].tail(lookback).min()), 2)
@@ -326,7 +326,7 @@ class ScannerExecutor:
         return avg5 < (avg20 * 0.70)
 
     def volume_breakout(self, df):
-        return self.relative_volume(df) >= 1.5
+        return self.relative_volume(df) >= RVOL_BREAKOUT
 
     def volume_score(self, df):
         rvol = self.relative_volume(df)
@@ -467,8 +467,8 @@ class ScannerExecutor:
     # -------------------------------------------------------------------------
     # Position Management / Exits
     # -------------------------------------------------------------------------
-    def trailing_stop_loss(self, current_price, atr, multiplier=2):
-        return round(current_price - (atr * multiplier), 2)
+    def trailing_stop_loss(self, current_price, atr, multiplier=ATR_MULTIPLIER):
+        return round(current_price - (atr * multiplier), ATR_MULTIPLIER)
 
     def break_even_stop(self, entry, current_price, stop_loss, target1):
         return entry if current_price >= target1 else stop_loss
