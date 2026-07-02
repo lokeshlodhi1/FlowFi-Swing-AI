@@ -28,15 +28,27 @@ class MarketTrend:
 
         df = market.data.copy()
 
-        # Fix yfinance MultiIndex
+        # Handle yfinance MultiIndex columns
         if hasattr(df.columns, "nlevels") and df.columns.nlevels > 1:
             df.columns = df.columns.get_level_values(0)
 
+        # Calculate EMAs
         df["EMA20"] = IndicatorEngine.ema(df, 20)
         df["EMA50"] = IndicatorEngine.ema(df, 50)
         df["EMA200"] = IndicatorEngine.ema(df, 200)
 
         df = df.dropna()
+
+        if df.empty:
+            return MarketTrendResult(
+                trend="SIDEWAYS",
+                close=0,
+                ema20=0,
+                ema50=0,
+                ema200=0,
+                trend_strength=0,
+                bullish_alignment=False,
+            )
 
         last = df.iloc[-1]
 
@@ -59,33 +71,33 @@ class MarketTrend:
         if close > ema200:
             trend_strength += 25
 
-        bullish_alignment = ema20 > ema50 > ema200
-bearish_alignment = ema20 < ema50 < ema200
+        bullish_alignment = (
+            ema20 > ema50 > ema200
+        )
 
-# Improved trend classification
-if bullish_alignment:
-    trend = "BULLISH"
+        bearish_alignment = (
+            ema20 < ema50 < ema200
+        )
 
-elif trend_strength >= 75:
-    trend = "BULLISH"
+        # Trend Classification
+        if bullish_alignment:
+            trend = "BULLISH"
 
-elif trend_strength >= 50:
-    trend = "SIDEWAYS"
+        elif trend_strength >= 75:
+            trend = "BULLISH"
 
-elif bearish_alignment:
-    trend = "BEARISH"
+        elif bearish_alignment:
+            trend = "BEARISH"
 
-else:
-    trend = "SIDEWAYS"
+        else:
+            trend = "SIDEWAYS"
 
-   print(
-    f"NIFTY Trend: {trend} | "
-    f"Close={close:.2f} | "
-    f"EMA20={ema20:.2f} | "
-    f"EMA50={ema50:.2f} | "
-    f"EMA200={ema200:.2f} | "
-    f"Strength={trend_strength}"
-)
+        print(
+            f"[Market] "
+            f"Trend={trend} | "
+            f"Strength={trend_strength} | "
+            f"Close={close:.2f}"
+        )
 
         return MarketTrendResult(
             trend=trend,
@@ -94,6 +106,5 @@ else:
             ema50=ema50,
             ema200=ema200,
             trend_strength=trend_strength,
-            
-bullish_alignment=(trend == "BULLISH"),,
+            bullish_alignment=(trend == "BULLISH"),
         )
