@@ -49,6 +49,9 @@ class ScannerExecutor:
 
     def prepare_dataframe(self, df):
         df = df.copy()
+# Fix Yahoo Finance MultiIndex columns
+if hasattr(df.columns, "nlevels") and df.columns.nlevels > 1:
+    df.columns = df.columns.get_level_values(0)
         df["EMA_FAST"] = self.indicators.ema(df, 20)
         df["EMA_MEDIUM"] = self.indicators.ema(df, 50)
         df["EMA_SLOW"] = self.indicators.ema(df, 200)
