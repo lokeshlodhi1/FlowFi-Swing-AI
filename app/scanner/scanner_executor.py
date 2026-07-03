@@ -15,6 +15,7 @@ from app.scanner.multi_timeframe import MultiTimeframe
 from app.scanner.signal_ranker import SignalRanker
 from app.ai.ai_confidence_engine import AIConfidenceEngine
 from app.risk.portfolio_manager import PortfolioManager
+from app.scanner.scanner_statistics import ScannerStatistics
 
 
 class ScannerExecutor:
@@ -26,6 +27,7 @@ class ScannerExecutor:
         self.indicators = IndicatorEngine()
         self.market = MarketEngine()
         self.signal_ranker = SignalRanker()
+        self.statistics_engine = ScannerStatistics()
 
         self.portfolio = PortfolioManager(
             capital=INITIAL_CAPITAL
@@ -232,15 +234,21 @@ class ScannerExecutor:
         for symbol in symbols:
 
             trade = self.scan_stock(symbol)
+            if trade is not None:
+    self.statistics_engine.add(trade["signal"])
 
             if trade is None:
                 continue
 
-            if trade["signal"] not in [
-                "BUY",
-                "STRONG BUY",
-            ]:
-                continue
+            if trade["signal"] == "WATCH":
+    self.statistics_engine.add("WATCH")
+    continue
+
+if trade["signal"] == "REJECT":
+    self.statistics_engine.add(trade["reason"])
+    continue
+
+self.statistics_engine.add(trade["signal"])
 
             results.append(trade)
 
@@ -276,7 +284,7 @@ class ScannerExecutor:
             f"{len(final_results)} BUY signals found."
 
         )
-
+        self.statistics_engine.report()
         return final_results
 
     # ----------------------------------------------------------
