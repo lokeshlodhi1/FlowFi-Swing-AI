@@ -231,26 +231,25 @@ class ScannerExecutor:
             f"Scanning {len(symbols)} stocks..."
         )
 
-        for symbol in symbols:
+      for symbol in symbols:
 
-            trade = self.scan_stock(symbol)
-            if trade is not None:
-    self.statistics_engine.add(trade["signal"])
+    trade = self.scan_stock(symbol)
 
-            if trade is None:
-                continue
+    if trade is None:
+        continue
 
-            if trade["signal"] == "WATCH":
-    self.statistics_engine.add("WATCH")
-    continue
+    # Store statistics
 
-if trade["signal"] == "REJECT":
-    self.statistics_engine.add(trade["reason"])
-    continue
 
-self.statistics_engine.add(trade["signal"])
 
-            results.append(trade)
+
+    elif trade["signal"] == "BUY":
+        self.statistics_engine.add("BUY")
+
+    elif trade["signal"] == "STRONG BUY":
+        self.statistics_engine.add("STRONG BUY")
+
+    results.append(trade)
 
         ranked = self.signal_ranker.get_top_signals(
             self.max_signals
