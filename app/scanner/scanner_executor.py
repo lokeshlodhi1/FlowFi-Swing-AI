@@ -5,7 +5,6 @@ import pandas as pd
 import yfinance as yf
 
 from app.config.trading_config import *
-
 from app.scanner.indicator_engine import IndicatorEngine
 from app.market.market_engine import MarketEngine
 from app.scanner.entry_engine import EntryEngine
@@ -21,7 +20,6 @@ from app.scanner.scanner_statistics import ScannerStatistics
 class ScannerExecutor:
 
     def __init__(self):
-
         self.logger = logging.getLogger(__name__)
 
         self.indicators = IndicatorEngine()
@@ -29,9 +27,7 @@ class ScannerExecutor:
         self.signal_ranker = SignalRanker()
         self.statistics_engine = ScannerStatistics()
 
-        self.portfolio = PortfolioManager(
-            capital=INITIAL_CAPITAL
-        )
+        self.portfolio = PortfolioManager(capital=INITIAL_CAPITAL)
 
         self.capital = INITIAL_CAPITAL
         self.risk_percent = RISK_PERCENT
@@ -41,15 +37,8 @@ class ScannerExecutor:
     # DATA DOWNLOAD
     # ----------------------------------------------------------
 
-    def download_data(
-        self,
-        symbol,
-        period="6mo",
-        interval="1d",
-    ):
-
+    def download_data(self, symbol, period="6mo", interval="1d"):
         try:
-
             df = yf.download(
                 symbol,
                 period=period,
@@ -68,9 +57,7 @@ class ScannerExecutor:
             return df
 
         except Exception as e:
-
             self.logger.error(f"{symbol}: {e}")
-
             return None
 
     # ----------------------------------------------------------
@@ -78,7 +65,6 @@ class ScannerExecutor:
     # ----------------------------------------------------------
 
     def prepare_dataframe(self, df):
-
         df = df.copy()
 
         # Fix MultiIndex if required
@@ -94,7 +80,6 @@ class ScannerExecutor:
         df["RVOL"] = self.indicators.relative_volume(df)
 
         df = df.dropna()
-
         return df
 
     # ----------------------------------------------------------
@@ -102,22 +87,17 @@ class ScannerExecutor:
     # ----------------------------------------------------------
 
     def scan_stock(self, symbol):
-
         try:
-
             df = self.download_data(symbol)
 
             if df is None:
                 return None
 
             df = self.prepare_dataframe(df)
-
             latest = df.iloc[-1]
-
             market = self.market.analyse_market()
 
             if not market["buy_allowed"]:
-
                 return {
                     "symbol": symbol,
                     "signal": "REJECT",
@@ -134,7 +114,6 @@ class ScannerExecutor:
             ).evaluate()
 
             if not stock_filter.passed:
-
                 return {
                     "symbol": symbol,
                     "signal": "REJECT",
@@ -144,7 +123,6 @@ class ScannerExecutor:
             entry = EntryEngine(df).analyse()
 
             if entry["signal"] == "WATCH":
-
                 return {
                     "symbol": symbol,
                     "signal": "WATCH",
@@ -162,7 +140,6 @@ class ScannerExecutor:
             )
 
             if not risk.valid:
-
                 return {
                     "symbol": symbol,
                     "signal": "REJECT",
@@ -178,7 +155,6 @@ class ScannerExecutor:
             ).evaluate()
 
             if not ai.passed:
-
                 return {
                     "symbol": symbol,
                     "signal": "REJECT",
@@ -210,80 +186,55 @@ class ScannerExecutor:
             }
 
         except Exception as e:
-
-            self.logger.exception(
-                f"Scanner Error ({symbol}) : {e}"
-            )
-
+            self.logger.exception(f"Scanner Error ({symbol}) : {e}")
             return None
 
-        # ----------------------------------------------------------
-        # SCAN COMPLETE MARKET
-        # ----------------------------------------------------------
-    
-        def scan_market(self, symbols):
-    
+    # ----------------------------------------------------------
+    # SCAN COMPLETE MARKET
+    # ----------------------------------------------------------
+
+    def scan_market(self, symbols):
         results = []
-    
         self.signal_ranker.signals = []
-    
-        self.logger.info(
-            f"Scanning {len(symbols)} stocks..."
-        )
-    
+        self.logger.info(f"Scanning {len(symbols)} stocks...")
+
         for symbol in symbols:
-    
             trade = self.scan_stock(symbol)
-    
+
             if trade is None:
                 continue
-    
+
             if trade["signal"] == "WATCH":
                 self.statistics_engine.add("WATCH")
                 continue
-    
             elif trade["signal"] == "REJECT":
                 self.statistics_engine.add(trade["reason"])
                 continue
-    
             elif trade["signal"] == "BUY":
                 self.statistics_engine.add("BUY")
-    
             elif trade["signal"] == "STRONG BUY":
                 self.statistics_engine.add("STRONG BUY")
-    
+
             results.append(trade)
-    
-        ranked = self.signal_ranker.get_top_signals(
-            self.max_signals
-        )
-    
+
+        ranked = self.signal_ranker.get_top_signals(self.max_signals)
         final_results = []
-    
+
         for ranked_signal in ranked:
-    
             for trade in results:
-    
                 if trade["symbol"] == ranked_signal.symbol:
-    
                     trade["rank_score"] = ranked_signal.score
                     trade["recommendation"] = ranked_signal.recommendation
-    
                     final_results.append(trade)
-    
                     break
-    
+
         final_results.sort(
             key=lambda x: x["rank_score"],
             reverse=True,
         )
-    
-        self.logger.info(
-            f"{len(final_results)} BUY signals found."
-        )
-    
+
+        self.logger.info(f"{len(final_results)} BUY signals found.")
         self.statistics_engine.report()
-    
         return final_results
 
     # ----------------------------------------------------------
@@ -291,13 +242,9 @@ class ScannerExecutor:
     # ----------------------------------------------------------
 
     def get_top_signal(self, symbols):
-
         signals = self.scan_market(symbols)
-
         if len(signals) == 0:
-
             return None
-
         return signals[0]
 
     # ----------------------------------------------------------
@@ -305,13 +252,9 @@ class ScannerExecutor:
     # ----------------------------------------------------------
 
     def run(self, symbols):
-
         signals = self.scan_market(symbols)
-
         self.print_summary(signals)
-
         self.export_signals(signals)
-
         return signals
 
     # ----------------------------------------------------------
@@ -319,121 +262,62 @@ class ScannerExecutor:
     # ----------------------------------------------------------
 
     def print_summary(self, signals):
-
         print()
-
         print("=" * 70)
-
         print("FLOWFI AI SWING SCANNER")
-
         print("=" * 70)
-
         print()
 
         for signal in signals:
-
             print(
-
                 f"{signal['symbol']}"
-
                 f" | "
-
                 f"{signal['recommendation']}"
-
                 f" | "
-
                 f"{signal['strategy']}"
-
                 f" | "
-
                 f"{signal['confidence']}%"
-
             )
-
         print()
-
         print("=" * 70)
 
     # ----------------------------------------------------------
     # EXPORT CSV
     # ----------------------------------------------------------
 
-    def export_signals(
-
-        self,
-
-        signals,
-
-        filename=None,
-
-    ):
-
+    def export_signals(self, signals, filename=None):
         if filename is None:
-
             filename = (
-
                 f"signals_"
-
                 f"{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-
-                ".csv"
-
+                f".csv"
             )
 
         if len(signals) == 0:
-
-            self.logger.warning(
-
-                "No signals found."
-
-            )
-
+            self.logger.warning("No signals found.")
             return
 
-        pd.DataFrame(signals).to_csv(
-
-            filename,
-
-            index=False,
-
-        )
-
-        self.logger.info(
-
-            f"Signals exported to {filename}"
-
-        )
+        pd.DataFrame(signals).to_csv(filename, index=False)
+        self.logger.info(f"Signals exported to {filename}")
 
     # ----------------------------------------------------------
     # STATISTICS
     # ----------------------------------------------------------
 
     def statistics(self, signals):
-
         stats = {
-
             "total": len(signals),
-
             "buy": 0,
-
             "strong_buy": 0,
-
             "watch": 0,
-
         }
 
         for signal in signals:
-
             if signal["signal"] == "BUY":
-
                 stats["buy"] += 1
-
             elif signal["signal"] == "STRONG BUY":
-
                 stats["strong_buy"] += 1
-
             else:
-
                 stats["watch"] += 1
 
         return stats
@@ -443,213 +327,91 @@ class ScannerExecutor:
     # ----------------------------------------------------------
 
     def find_swing_high(self, df, lookback=LOOKBACK_SWING):
-
         if len(df) < lookback:
             return None
-
-        return float(
-            df["High"].tail(lookback).max()
-        )
+        return float(df["High"].tail(lookback).max())
 
     def find_swing_low(self, df, lookback=LOOKBACK_SWING):
-
         if len(df) < lookback:
             return None
+        return float(df["Low"].tail(lookback).min())
 
-        return float(
-            df["Low"].tail(lookback).min()
-        )
-
-    def calculate_pullback_percentage(
-        self,
-        current_price,
-        swing_high,
-    ):
-
+    def calculate_pullback_percentage(self, current_price, swing_high):
         if swing_high is None:
             return 0
+        return round(((swing_high - current_price) / swing_high) * 100, 2)
 
-        return round(
-            ((swing_high - current_price) / swing_high) * 100,
-            2,
-        )
+    def is_healthy_pullback(self, current_price, swing_high):
+        pullback = self.calculate_pullback_percentage(current_price, swing_high)
+        return (PULLBACK_MIN <= pullback <= PULLBACK_MAX, pullback)
 
-    def is_healthy_pullback(
-        self,
-        current_price,
-        swing_high,
-    ):
-
-        pullback = self.calculate_pullback_percentage(
-            current_price,
-            swing_high,
-        )
-
-        return (
-            PULLBACK_MIN
-            <= pullback
-            <= PULLBACK_MAX,
-            pullback,
-        )
-
-    def calculate_atr_percent(
-        self,
-        atr,
-        close,
-    ):
-
+    def calculate_atr_percent(self, atr, close):
         if close == 0:
             return 0
+        return round((atr / close) * 100, 2)
 
-        return round(
-            (atr / close) * 100,
-            2,
-        )
-
-    def find_resistance(
-        self,
-        df,
-        lookback=LOOKBACK_SR,
-    ):
-
+    def find_resistance(self, df, lookback=LOOKBACK_SR):
         if len(df) < lookback:
             return None
+        return round(float(df["High"].tail(lookback).max()), 2)
 
-        return round(
-            float(df["High"].tail(lookback).max()),
-            2,
-        )
-
-    def find_support(
-        self,
-        df,
-        lookback=LOOKBACK_SR,
-    ):
-
+    def find_support(self, df, lookback=LOOKBACK_SR):
         if len(df) < lookback:
             return None
+        return round(float(df["Low"].tail(lookback).min()), 2)
 
-        return round(
-            float(df["Low"].tail(lookback).min()),
-            2,
-        )
-
-    def is_breakout(
-        self,
-        close,
-        resistance,
-        tolerance=BREAKOUT_TOLERANCE,
-    ):
-
+    def is_breakout(self, close, resistance, tolerance=BREAKOUT_TOLERANCE):
         if resistance is None:
             return False
+        return close >= (resistance * (1 + tolerance / 100))
 
-        return close >= (
-            resistance
-            * (1 + tolerance / 100)
-        )
-
-    def near_support(
-        self,
-        close,
-        support,
-        tolerance=SUPPORT_TOLERANCE,
-    ):
-
+    def near_support(self, close, support, tolerance=SUPPORT_TOLERANCE):
         if support is None:
             return False
-
-        distance = (
-            abs(close - support)
-            / support
-        ) * 100
-
+        distance = (abs(close - support) / support) * 100
         return distance <= tolerance
 
     # ----------------------------------------------------------
     # VOLUME ANALYSIS
     # ----------------------------------------------------------
 
-    def relative_volume(
-        self,
-        df,
-        period=20,
-    ):
-
+    def relative_volume(self, df, period=20):
         if len(df) < period:
             return 1.0
 
-        current_volume = float(
-            df.iloc[-1]["Volume"]
-        )
-
-        average_volume = float(
-            df["Volume"].tail(period).mean()
-        )
+        current_volume = float(df.iloc[-1]["Volume"])
+        average_volume = float(df["Volume"].tail(period).mean())
 
         if average_volume == 0:
             return 1.0
 
-        return round(
-            current_volume / average_volume,
-            2,
-        )
+        return round(current_volume / average_volume, 2)
 
-    def volume_dry_up(
-        self,
-        df,
-        period=20,
-    ):
-
+    def volume_dry_up(self, df, period=20):
         if len(df) < period:
             return False
 
-        avg20 = float(
-            df["Volume"].tail(period).mean()
-        )
-
-        avg5 = float(
-            df["Volume"].tail(5).mean()
-        )
-
+        avg20 = float(df["Volume"].tail(period).mean())
+        avg5 = float(df["Volume"].tail(5).mean())
         return avg5 < (avg20 * 0.70)
 
-    def volume_breakout(
-        self,
-        df,
-    ):
+    def volume_breakout(self, df):
+        return self.relative_volume(df) >= RVOL_BREAKOUT
 
-        return (
-            self.relative_volume(df)
-            >= RVOL_BREAKOUT
-        )
-
-    def volume_score(
-        self,
-        df,
-    ):
-
+    def volume_score(self, df):
         rvol = self.relative_volume(df)
 
         if rvol >= 3:
             return 25
-
         elif rvol >= 2:
             return 20
-
         elif rvol >= 1.5:
             return 15
-
         elif rvol >= 1.2:
             return 10
-
         return 0
 
-    def accumulation(
-        self,
-        df,
-    ):
-
+    def accumulation(self, df):
         candle = df.iloc[-1]
 
         close = float(candle["Close"])
@@ -658,42 +420,22 @@ class ScannerExecutor:
         low = float(candle["Low"])
         volume = float(candle["Volume"])
 
-        avg_volume = float(
-            df["Volume"].tail(20).mean()
-        )
+        avg_volume = float(df["Volume"].tail(20).mean())
 
         if high == low:
             return False
 
-        body = abs(
-            close - open_price
-        )
-
+        body = abs(close - open_price)
         candle_range = high - low
-
-        body_percent = (
-            body / candle_range
-        ) * 100
+        body_percent = (body / candle_range) * 100
 
         return (
-
             close > open_price
-
-            and
-
-            body_percent >= 60
-
-            and
-
-            volume >= avg_volume * 1.5
-
+            and body_percent >= 60
+            and volume >= avg_volume * 1.5
         )
 
-    def distribution(
-        self,
-        df,
-    ):
-
+    def distribution(self, df):
         candle = df.iloc[-1]
 
         close = float(candle["Close"])
@@ -702,35 +444,19 @@ class ScannerExecutor:
         low = float(candle["Low"])
         volume = float(candle["Volume"])
 
-        avg_volume = float(
-            df["Volume"].tail(20).mean()
-        )
+        avg_volume = float(df["Volume"].tail(20).mean())
 
         if high == low:
             return False
 
-        body = abs(
-            close - open_price
-        )
-
+        body = abs(close - open_price)
         candle_range = high - low
-
-        body_percent = (
-            body / candle_range
-        ) * 100
+        body_percent = (body / candle_range) * 100
 
         return (
-
             close < open_price
-
-            and
-
-            body_percent >= 60
-
-            and
-
-            volume >= avg_volume * 1.5
-
+            and body_percent >= 60
+            and volume >= avg_volume * 1.5
         )
 
     # ----------------------------------------------------------
@@ -738,7 +464,6 @@ class ScannerExecutor:
     # ----------------------------------------------------------
 
     def trend_strength(self, df):
-
         last = df.iloc[-1]
 
         ema20 = float(last["EMA20"])
@@ -749,51 +474,40 @@ class ScannerExecutor:
 
         if ema20 > ema50:
             score += 10
-
         if ema50 > ema200:
             score += 10
-
         if ema20 > ema200:
             score += 5
 
         return score
 
     def price_position_score(self, df):
-
         last = df.iloc[-1]
-
         close = float(last["Close"])
 
         score = 0
 
         if close > float(last["EMA20"]):
             score += 20
-
         if close > float(last["EMA50"]):
             score += 30
-
         if close > float(last["EMA200"]):
             score += 50
 
         return score
 
     def momentum_score(self, df):
-
         rsi = float(df.iloc[-1]["RSI"])
 
         if 55 <= rsi <= 68:
             return 30
-
         elif 50 <= rsi < 55:
             return 20
-
         elif 68 < rsi <= 75:
             return 15
-
         return 0
 
     def trend_grade(self, df):
-
         total = (
             self.trend_strength(df)
             + self.price_position_score(df)
@@ -802,27 +516,16 @@ class ScannerExecutor:
 
         if total >= 120:
             return "A+", total
-
         elif total >= 100:
             return "A", total
-
         elif total >= 80:
             return "B", total
-
         elif total >= 60:
             return "C", total
-
         return "D", total
 
-    def risk_reward_score(
-        self,
-        entry,
-        stop_loss,
-        target,
-    ):
-
+    def risk_reward_score(self, entry, stop_loss, target):
         risk = entry - stop_loss
-
         reward = target - entry
 
         if risk <= 0:
@@ -832,16 +535,12 @@ class ScannerExecutor:
 
         if rr >= 3:
             return 25
-
         elif rr >= 2.5:
             return 20
-
         elif rr >= 2:
             return 15
-
         elif rr >= 1.5:
             return 10
-
         return 0
 
     def timeframe_score(
@@ -851,13 +550,7 @@ class ScannerExecutor:
         h4=True,
         h2=True,
     ):
-
-        return MultiTimeframe().confirm(
-            weekly,
-            daily,
-            h4,
-            h2,
-        ).score
+        return MultiTimeframe().confirm(weekly, daily, h4, h2).score
 
     def institutional_score(
         self,
@@ -870,85 +563,35 @@ class ScannerExecutor:
         h4=True,
         h2=True,
     ):
-
-        timeframe = MultiTimeframe().confirm(
-            weekly,
-            daily,
-            h4,
-            h2,
-        )
+        timeframe = MultiTimeframe().confirm(weekly, daily, h4, h2)
 
         score = (
             self.trend_strength(df)
             + self.volume_score(df)
-            + self.risk_reward_score(
-                entry,
-                stop_loss,
-                target,
-            )
+            + self.risk_reward_score(entry, stop_loss, target)
             + timeframe.score
         )
 
         return min(score, 100)
 
-    def trailing_stop_loss(
-        self,
-        current_price,
-        atr,
-        multiplier=ATR_MULTIPLIER,
-    ):
+    def trailing_stop_loss(self, current_price, atr, multiplier=ATR_MULTIPLIER):
+        return round(current_price - (atr * multiplier), 2)
 
-        return round(
-            current_price - (atr * multiplier),
-            2,
-        )
-
-    def break_even_stop(
-        self,
-        entry,
-        current_price,
-        stop_loss,
-        target1,
-    ):
-
+    def break_even_stop(self, entry, current_price, stop_loss, target1):
         if current_price >= target1:
             return entry
-
         return stop_loss
 
-    def partial_exit(
-        self,
-        current_price,
-        target1,
-        target2,
-    ):
-
+    def partial_exit(self, current_price, target1, target2):
         if current_price >= target2:
             return 100
-
         elif current_price >= target1:
             return 50
-
         return 0
 
-    def time_exit(
-        self,
-        holding_days,
-        max_days=20,
-    ):
-
+    def time_exit(self, holding_days, max_days=20):
         return holding_days >= max_days
 
-    def gap_down_exit(
-        self,
-        previous_close,
-        today_open,
-        threshold=3,
-    ):
-
-        gap = (
-            (previous_close - today_open)
-            / previous_close
-        ) * 100
-
+    def gap_down_exit(self, previous_close, today_open, threshold=3):
+        gap = ((previous_close - today_open) / previous_close) * 100
         return gap >= threshold
