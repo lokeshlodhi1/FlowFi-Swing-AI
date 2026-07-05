@@ -223,68 +223,68 @@ class ScannerExecutor:
 
     def scan_market(self, symbols):
 
-        results = []
+    results = []
 
-        self.signal_ranker.signals = []
+    self.signal_ranker.signals = []
 
-        self.logger.info(
-            f"Scanning {len(symbols)} stocks..."
-        )
+    self.logger.info(
+        f"Scanning {len(symbols)} stocks..."
+    )
 
-      for symbol in symbols:
+    for symbol in symbols:
 
-    trade = self.scan_stock(symbol)
+        trade = self.scan_stock(symbol)
 
-    if trade is None:
-        continue
+        if trade is None:
+            continue
 
-    # Store statistics
+        if trade["signal"] == "WATCH":
+            self.statistics_engine.add("WATCH")
+            continue
 
+        elif trade["signal"] == "REJECT":
+            self.statistics_engine.add(trade["reason"])
+            continue
 
+        elif trade["signal"] == "BUY":
+            self.statistics_engine.add("BUY")
 
+        elif trade["signal"] == "STRONG BUY":
+            self.statistics_engine.add("STRONG BUY")
 
-    elif trade["signal"] == "BUY":
-        self.statistics_engine.add("BUY")
+        results.append(trade)
 
-    elif trade["signal"] == "STRONG BUY":
-        self.statistics_engine.add("STRONG BUY")
+    ranked = self.signal_ranker.get_top_signals(
+        self.max_signals
+    )
 
-    results.append(trade)
+    final_results = []
 
-        ranked = self.signal_ranker.get_top_signals(
-            self.max_signals
-        )
+    for ranked_signal in ranked:
 
-        final_results = []
+        for trade in results:
 
-        for ranked_signal in ranked:
+            if trade["symbol"] == ranked_signal.symbol:
 
-            for trade in results:
+                trade["rank_score"] = ranked_signal.score
+                trade["recommendation"] = ranked_signal.recommendation
 
-                if trade["symbol"] == ranked_signal.symbol:
+                final_results.append(trade)
 
-                    trade["rank_score"] = ranked_signal.score
-                    trade["recommendation"] = ranked_signal.recommendation
+                break
 
-                    final_results.append(trade)
+    final_results.sort(
+        key=lambda x: x["rank_score"],
+        reverse=True,
+    )
 
-                    break
+    self.logger.info(
+        f"{len(final_results)} BUY signals found."
+    )
 
-        final_results.sort(
+    self.statistics_engine.report()
 
-            key=lambda x: x["rank_score"],
-
-            reverse=True,
-
-        )
-
-        self.logger.info(
-
-            f"{len(final_results)} BUY signals found."
-
-        )
-        self.statistics_engine.report()
-        return final_results
+    return final_results
 
     # ----------------------------------------------------------
     # GET TOP SIGNAL
