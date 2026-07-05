@@ -217,74 +217,74 @@ class ScannerExecutor:
 
             return None
 
-    # ----------------------------------------------------------
-    # SCAN COMPLETE MARKET
-    # ----------------------------------------------------------
-
-    def scan_market(self, symbols):
-
-    results = []
-
-    self.signal_ranker.signals = []
-
-    self.logger.info(
-        f"Scanning {len(symbols)} stocks..."
-    )
-
-    for symbol in symbols:
-
-        trade = self.scan_stock(symbol)
-
-        if trade is None:
-            continue
-
-        if trade["signal"] == "WATCH":
-            self.statistics_engine.add("WATCH")
-            continue
-
-        elif trade["signal"] == "REJECT":
-            self.statistics_engine.add(trade["reason"])
-            continue
-
-        elif trade["signal"] == "BUY":
-            self.statistics_engine.add("BUY")
-
-        elif trade["signal"] == "STRONG BUY":
-            self.statistics_engine.add("STRONG BUY")
-
-        results.append(trade)
-
-    ranked = self.signal_ranker.get_top_signals(
-        self.max_signals
-    )
-
-    final_results = []
-
-    for ranked_signal in ranked:
-
-        for trade in results:
-
-            if trade["symbol"] == ranked_signal.symbol:
-
-                trade["rank_score"] = ranked_signal.score
-                trade["recommendation"] = ranked_signal.recommendation
-
-                final_results.append(trade)
-
-                break
-
-    final_results.sort(
-        key=lambda x: x["rank_score"],
-        reverse=True,
-    )
-
-    self.logger.info(
-        f"{len(final_results)} BUY signals found."
-    )
-
-    self.statistics_engine.report()
-
-    return final_results
+        # ----------------------------------------------------------
+        # SCAN COMPLETE MARKET
+        # ----------------------------------------------------------
+    
+        def scan_market(self, symbols):
+    
+        results = []
+    
+        self.signal_ranker.signals = []
+    
+        self.logger.info(
+            f"Scanning {len(symbols)} stocks..."
+        )
+    
+        for symbol in symbols:
+    
+            trade = self.scan_stock(symbol)
+    
+            if trade is None:
+                continue
+    
+            if trade["signal"] == "WATCH":
+                self.statistics_engine.add("WATCH")
+                continue
+    
+            elif trade["signal"] == "REJECT":
+                self.statistics_engine.add(trade["reason"])
+                continue
+    
+            elif trade["signal"] == "BUY":
+                self.statistics_engine.add("BUY")
+    
+            elif trade["signal"] == "STRONG BUY":
+                self.statistics_engine.add("STRONG BUY")
+    
+            results.append(trade)
+    
+        ranked = self.signal_ranker.get_top_signals(
+            self.max_signals
+        )
+    
+        final_results = []
+    
+        for ranked_signal in ranked:
+    
+            for trade in results:
+    
+                if trade["symbol"] == ranked_signal.symbol:
+    
+                    trade["rank_score"] = ranked_signal.score
+                    trade["recommendation"] = ranked_signal.recommendation
+    
+                    final_results.append(trade)
+    
+                    break
+    
+        final_results.sort(
+            key=lambda x: x["rank_score"],
+            reverse=True,
+        )
+    
+        self.logger.info(
+            f"{len(final_results)} BUY signals found."
+        )
+    
+        self.statistics_engine.report()
+    
+        return final_results
 
     # ----------------------------------------------------------
     # GET TOP SIGNAL
