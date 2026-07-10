@@ -1,42 +1,25 @@
 {
   "capital": 100000,
-
   "risk_percent": 1,
-
-  "confidence_required": 90,
-
+  "confidence_required": 75,
   "ema": {
-
     "fast": 20,
-
     "medium": 50,
-
     "slow": 200
-
   },
-
-  "volume_multiplier": 1.5,
-
-  "atr_multiplier": 1.5,
-
-  "target1_rr": 2,
-
-  "target2_rr": 3,
-
+  "pullback_rvol_min": 1.1,
+  "breakout_rvol_min": 1.3,
+  "target1_rr": 2.0,
+  "target2_rr": 2.5,
   "scanner": {
-
     "minimum_price": 100,
-
+    "maximum_price": 5000,
     "minimum_volume": 500000,
-
+    "min_atr_percent": 2.0,
+    "max_atr_percent": 8.0,
     "maximum_positions": 5
-
   },
-
   "telegram": {
-
     "enabled": true
-
   }
-
 }
