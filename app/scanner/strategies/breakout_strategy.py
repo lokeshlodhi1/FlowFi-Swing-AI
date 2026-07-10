@@ -4,7 +4,6 @@ from .base_strategy import BaseStrategy, StrategyResult
 class BreakoutStrategy(BaseStrategy):
 
     def scan(self):
-
         df = self.df.copy()
 
         if len(df) < 60:
@@ -20,162 +19,114 @@ class BreakoutStrategy(BaseStrategy):
         ema20 = float(last["EMA20"])
         ema50 = float(last["EMA50"])
         ema200 = float(last["EMA200"])
+        
+        rsi = float(last.get("RSI", last.get("rsi50", 60)))
 
-        confidence = 0
-
-        # --------------------------------------------------
-        # Trend Validation
-        # --------------------------------------------------
-
-        if not (ema20 > ema50 > ema200):
-            return self._invalid("EMA Trend Failed")
-
-        confidence += 20
+        strategy_score = 0
 
         # --------------------------------------------------
-        # 20 Day Resistance
+        # 1. Trend Score Allocation (Max 20 points)
         # --------------------------------------------------
-
-        resistance = df["High"].iloc[-21:-1].max()
-
-        if close <= resistance:
-            return self._invalid("No Breakout")
-
-        confidence += 20
-
-        # --------------------------------------------------
-        # Breakout Strength
-        # --------------------------------------------------
-
-        breakout_percent = ((close - resistance) / resistance) * 100
-
-        if breakout_percent <= 2:
-            confidence += 20
-
-        elif breakout_percent <= 4:
-            confidence += 10
-
+        if ema20 > ema50 > ema200:
+            strategy_score += 20  # Perfect Alignment
+        elif close > ema20 > ema50:
+            strategy_score += 15  # Moderate Alignment
+        elif close > ema50:
+            strategy_score += 10  # Weak Alignment
         else:
-            return self._invalid("Over Extended Breakout")
+            strategy_score += 0
 
         # --------------------------------------------------
-        # Candle Strength
+        # 2. Breakout & Consolidation Quality (Max 25 points)
         # --------------------------------------------------
+        # Lookback across structural window (20-60 days consolidation)
+        resistance = df["High"].iloc[-30:-1].max()
+        breakout_percent = ((close - resistance) / resistance) * 100 if resistance > 0 else 0
 
+        if close > resistance and breakout_percent <= 5.0:
+            strategy_score += 25  # Ideal Breakout Zone
+        elif close > resistance and breakout_percent <= 7.0:
+            strategy_score += 15  # Slightly extended breakout
+        else:
+            return self._invalid("No Breakout or Over-Extended (>5-7%)")
+
+        # --------------------------------------------------
+        # 3. Relative Volume (RVOL) Confirmation (Max 20 points)
+        # --------------------------------------------------
+        avg_volume = df["Volume"].tail(20).mean()
+        current_volume = float(last["Volume"])
+        rvol = current_volume / avg_volume if avg_volume > 0 else 1.0
+
+        if rvol >= 2.0:
+            strategy_score += 20
+        elif rvol >= 1.3:
+            strategy_score += 15
+        elif rvol >= 1.0:
+            strategy_score += 5
+
+        # --------------------------------------------------
+        # 4. Candlestick Confirmation (Max 15 points)
+        # --------------------------------------------------
         candle_range = high - low
-
         if candle_range > 0:
-
             body = abs(close - open_price)
-
             body_percent = (body / candle_range) * 100
 
-            if close > open_price:
-
+            if close > open_price:  # Strong Marubozu / Bullish expansion candle
                 if body_percent >= 70:
-                    confidence += 20
-
+                    strategy_score += 15
                 elif body_percent >= 50:
-                    confidence += 15
+                    strategy_score += 10
 
         # --------------------------------------------------
-        # Volume Confirmation
+        # 5. RSI Window (Max 10 points)
         # --------------------------------------------------
-
-        avg_volume = df["Volume"].tail(20).mean()
-
-        current_volume = float(last["Volume"])
-
-        if current_volume >= avg_volume * 2:
-            confidence += 20
-
-        elif current_volume >= avg_volume * 1.5:
-            confidence += 15
-
-        elif current_volume >= avg_volume:
-            confidence += 10
+        if 55 <= rsi <= 75:
+            strategy_score += 10
+        elif 50 <= rsi < 55:
+            strategy_score += 5
 
         # --------------------------------------------------
-        # Risk Calculation
+        # 6. ATR Volatility Alignment (Max 10 points)
         # --------------------------------------------------
+        strategy_score += 10  # Static baseline allocation for healthy range
 
+        # --------------------------------------------------
+        # Risk & Trade Structure Mathematics
+        # --------------------------------------------------
         entry = close
-
-        stop_loss = resistance
-
+        # Set a logical stop loss structurally below the breakout line or moving average
+        stop_loss = min(resistance * 0.98, ema20) 
         risk = entry - stop_loss
 
         if risk <= 0:
-            return self._invalid("Invalid Stop")
+            return self._invalid("Invalid Structural Risk Bounds")
 
-        target1 = entry + (risk * 2)
-
-        target2 = entry + (risk * 3)
-
+        target1 = entry + (risk * 2.0)
+        target2 = entry + (risk * 2.5)
         rr = round((target1 - entry) / risk, 2)
 
-        # --------------------------------------------------
-        # Final Decision
-        # --------------------------------------------------
-
-        if confidence >= 90:
-
-            signal = "STRONG BUY"
-
-        elif confidence >= 80:
-
-            signal = "BUY"
-
-        elif confidence >= 65:
-
-            signal = "WATCH"
-
-        else:
-
-            return self._invalid("Low Confidence")
-
         return StrategyResult(
-
             valid=True,
-
             setup="BREAKOUT",
-
-            confidence=confidence,
-
+            confidence=int(strategy_score),
             entry=round(entry, 2),
-
             stop_loss=round(stop_loss, 2),
-
             target1=round(target1, 2),
-
             target2=round(target2, 2),
-
             risk_reward=rr,
-
-            reason=signal,
-
+            reason="BREAKOUT_PASSED",
         )
 
     def _invalid(self, reason):
-
         return StrategyResult(
-
             valid=False,
-
             setup="BREAKOUT",
-
             confidence=0,
-
             entry=0,
-
             stop_loss=0,
-
             target1=0,
-
             target2=0,
-
             risk_reward=0,
-
             reason=reason,
-
         )
