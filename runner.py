@@ -35,7 +35,7 @@ class FlowFIRunner:
             
         os.makedirs("data", exist_ok=True)
         # Keeps your structural strategy metrics isolated cleanly in Excel
-        self.journal = TradeJournal(filepath="data/ema_pullback_journal.xlsx")
+        self.journal = TradeJournal("data/ema_pullback_journal.xlsx")
 
     def monitor_active_positions(self):
         """
