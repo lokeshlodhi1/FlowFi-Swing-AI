@@ -1,4 +1,5 @@
 from datetime import datetime
+from app.strategies.ema_pullback import EMAPullbackStrategy
 
 
 class MarketScheduler:
