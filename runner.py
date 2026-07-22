@@ -28,6 +28,11 @@ class FlowFIRunner:
         
         # --- NEW TRACKING INITIALIZATION ---
         self.trade_manager = TradeManager()
+        
+        # Safe directory check: removes a flat file named 'data' if it blocks creating the folder
+        if os.path.exists("data") and not os.path.isdir("data"):
+            os.remove("data")
+            
         os.makedirs("data", exist_ok=True)
         # Keeps your structural strategy metrics isolated cleanly in Excel
         self.journal = TradeJournal(filepath="data/ema_pullback_journal.xlsx")
@@ -41,9 +46,7 @@ class FlowFIRunner:
         print("MONITORING LIVE TRACKED POSITIONS (SL / TARGET CHECK)")
         print("=" * 60)
         
-        # Pull dynamic positions currently flagged as active in your DB framework
-        # NOTE: Make sure your trade repository object supports retrieving open positions.
-        # If the method name differs slightly in your db code, adjust 'get_open_positions()' accordingly.
+        # Safety check: Verify your database trades service has the method to get open positions
         if not hasattr(self.database.trades, 'get_open_positions'):
             print("⚠️ 'get_open_positions' method not detected on database class. Skipping monitoring loop.")
             return
@@ -58,13 +61,12 @@ class FlowFIRunner:
             symbol = trade.get("symbol")
             
             try:
-                # 1. Grab fresh price data using your internal market loader module
-                # Pulls structural quote history or current ticker price
+                # 1. Grab fresh price data using the internal market loader module
                 price_data = self.market.get_live_price(symbol)
                 if not price_data:
                     continue
                 
-                # 2. Run data metrics through your optimized TradeManager calculation engine
+                # 2. Run data metrics through the optimized TradeManager calculation engine
                 result = self.trade_manager.update(
                     symbol=symbol,
                     entry=float(trade.get("entry_price")),
@@ -83,8 +85,9 @@ class FlowFIRunner:
                         exit_price=result.current_price
                     )
                     
-                    # Update central database records
-                    self.database.trades.update_trade_status(symbol, status=result.status, close_price=result.current_price)
+                    # Update central database records (adjust method name if needed in your database service)
+                    if hasattr(self.database.trades, 'update_trade_status'):
+                        self.database.trades.update_trade_status(symbol, status=result.status, close_price=result.current_price)
                     
                     # Map message visual emojis based on target outcomes
                     alert_emojis = {
@@ -111,7 +114,7 @@ class FlowFIRunner:
         print("=" * 60 + "\n")
 
     def run(self):
-        # --- NEW STEP: Run position monitoring logic before running the new scan loop ---
+        # --- Run position monitoring logic before starting the new scan loop ---
         self.monitor_active_positions()
 
         nifty50 = self.symbols.load("nifty50")
@@ -152,12 +155,12 @@ class FlowFIRunner:
                     self.database.trades.add_trade(trade)
                     print("✅ Saved to Database")
                     
-                    # Also log the initial trade structure into Excel tracker sheet right away
+                    # Log the initial trade entry structure into the Excel tracker sheet right away
                     trade_log = {
                         "Ticker": trade.get("symbol"),
                         "Entry Price": trade.get("entry"),
                         "Stop Loss": trade.get("stop_loss"),
-                        "Target": trade.get("target1"), # or log map arrays directly
+                        "Target": trade.get("target1"),
                         "Status": "OPEN"
                     }
                     self.journal.add_entry(trade_log)
